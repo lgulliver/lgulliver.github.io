@@ -9,7 +9,7 @@ Liam Gulliver:
       icon: "fas fa-fw fa-envelope-square"
       # url: "mailto:your.name@email.com"
     - label: "Agile Engineering Podcast"
-      icon: "fas fa-fw fa-spotify"
+      icon: "fab fa-fw fa-spotify"
       url: "https://agileengineeringpodcast.com"
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
