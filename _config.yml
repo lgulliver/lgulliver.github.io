@@ -94,7 +94,7 @@ analytics:
 # Site Author
 author:
   name             : "Liam Gulliver"
-  avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  avatar           : "/assets/images/me.jpg"
   bio              : "DevOps & SDLC Coach - Public Speaker - Azure Specialist - Co-founder of DevOps Notts - Co-host Agile Engineering Podcast"
   location         : "Nottingham, UK"
   email            :
