@@ -1,0 +1,11 @@
+Liam Gulliver:
+  name        : "Liam Gulliver"
+  bio         : "As a former developer and architect, I have been working in and transforming organisations of varying age and size using Agile and DevOps practices for the last 15 years before making the move into consulting. My passion is helping organisations achieve higher throughput of delivery of value through happier, more engaged teams. I’m co-founder of the DevOps specialised meetup DevOps Notts in Nottingham, and co-creator and co-host of the Agile Engineering Podcast."
+  avatar      : "/assets/images/me.jpg"
+  links:    
+    - label: "Agile Engineering Podcast"
+      icon: "fas fa-fw fa-link"
+      url: "https://agileengineeringpodcast.com"
+    - label: "Twitter"
+      icon: "fab fa-fw fa-twitter-square"
+      url: "https://twitter.com/lrgulliver"
