@@ -447,6 +447,8 @@ Go ahead and enter a name and a message in each window and you should see your c
 
 {% include figure image_path="/assets/images/posts/blazor-serverless-chat" alt="Working Serverless Blazor WASM with SingalR and Function Apps!" caption="Working Serverless Blazor WASM with SingalR and Function Apps!" %}
 
+Deploying it all into Azure is as easy as updating your config to point to the right function application and copying your Blazor build output to a storage account with static website hosting enabled. You can read mor on that over on the [Microsoft documentation](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal).
+
 ## Complete Code
 
 You can find the complete code for this over at [lgulliver/blazor-webassembly-serverless-chat-demo](https://github.com/lgulliver/blazor-webassembly-serverless-chat-demo)
