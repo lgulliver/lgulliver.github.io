@@ -16,9 +16,9 @@ minimal_mistakes_skin    : "dark" # "air", "aqua", "contrast", "dark", "dirt", "
 
 # Site Settings
 locale                   : "en-US"
-title                    : "Blog"
+title                    : "Liam's Blog"
 title_separator          : "-"
-subtitle                 : # site tagline that appears below site title in masthead
+subtitle                 : "My waffling, now on the internet" # site tagline that appears below site title in masthead
 name                     : "Liam Gulliver"
 description              : "An amazing website."
 url                      : "https://lgulliver.github.io" # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
