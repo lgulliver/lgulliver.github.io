@@ -27,7 +27,7 @@ Azure SignalR Service is an Azure hosted and managed flavour of SignalR. What th
 
 An Azure Function is a serverless compute service that allows you to create event-driven, scalable apps in dotnetcore, Python, Node.js, Java or even PowerShell.
 
-For this project, we're sitcking with dotnetcore.
+For this project, we're sticking with dotnetcore.
 
 ### Blazor WebAssembly
 
