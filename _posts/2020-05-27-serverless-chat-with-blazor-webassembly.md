@@ -3,6 +3,8 @@ author: Liam Gulliver
 title: Serverless Chat with Blazor WebAssembly in Azure
 tags: blazor azure azure-signalr webassembly blazor-webassembly serverless azure-functions
 date: 2020-05-26 17:56:00
+redirect_from:
+    - /serverless-chat-with-blazor-webassembly
 ---
 
 It has been quite a long time since I've done much in terms of writing any code for myself but [Blazor WebAssembly](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor) has piqued my interest.
