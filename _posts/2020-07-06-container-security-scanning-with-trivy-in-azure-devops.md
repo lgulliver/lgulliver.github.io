@@ -62,7 +62,7 @@ I'm going to scan a pre-existing container from Docker Hub. This the command lin
 
 For me, this scan took all of 5 seconds to run against my demo container `liamgu/azuredevopscontainersdemo:74` image and the results were great. It scans the image itself and whatever is on the image. This particular image is based on `httpd:latest`.
 
-{% include figure image_path="/assets/images/posts/trivy-scan-results.png" alt="Trivy scan result example" caption="Snippet of the Trivy scan" %}
+{% include figure image_path="/assets/images/posts/trivy-scan-result.png" alt="Trivy scan result example" caption="Snippet of the Trivy scan" %}
 
 The above image is just a snippet of the scan, you can go and see the full results at https://dev.azure.com/lgulliver/ContainerScanning/_build/results?buildId=146&view=logs&j=12f1170f-54f2-53f3-20dd-22fc7dff55f9&t=5caf77c8-9b10-50ef-b5c7-ca89c63e1c86 if you really want to. 
 
@@ -97,6 +97,6 @@ Trivy supports setting exit codes and filters for when its run.
 
 Doing this means that when it finds any high or critical results, it'll fail the build and you can act accordingly. The downside to this of course is that it actually runs the scan twice, but filters the results.
 
-{% include figure image_path="/assets/images/posts/trivy-scan-results-fail.png" alt="Trivy scan result example" caption="Snippet of the Trivy scan failed task" %}
+{% include figure image_path="/assets/images/posts/trivy-scan-result-fail.png" alt="Trivy scan result example" caption="Snippet of the Trivy scan failed task" %}
 
 You can also output the results to a format such as JUnit, but at time of writing, there is a bug with the formatting resulting in an invalid report meaning Azure DevOps can't import it. A fix has been submitted though and is currently being tested, so I expect it'll be resolved in the next release and I shall follow up with how to integrate the results into Azure DevOps test reporting in due course.
