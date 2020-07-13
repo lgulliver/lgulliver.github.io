@@ -230,9 +230,9 @@ For the most part, they're the same as [my previous post](https://lgulliver.gith
       uses: aquasecurity/trivy-action@0.0.7
       with:
         # image reference
-        <!-- {% raw %} -->
+        {% raw %}
         image-ref: ${{ env.ImageName }}:github-${{ env.BuildNumber }}
-        <!-- {% endraw %} -->
+        {% endraw %}
         # exit code when vulnerabilities were found
         exit-code: 1
         # severities of vulnerabilities to be displayed
