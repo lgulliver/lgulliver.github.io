@@ -3,6 +3,10 @@ author: Liam Gulliver
 title: DevOps Notts - May 2020 with Gene Kim and Ross Shonfeld
 tags: gene-kim devops meetup devops-notts ross-shonfeld nottingham the-unicorn-project the-five-ideals
 date: 2020-05-28 13:00:00
+header:
+  video:
+    id: n8RuZMkzRbc
+    provider: youtube
 ---
 This week the meetup I run with my good friend, Mica Bell ([@MicaSophieBell](https://twitter.com/MicaSophiaBell)) played host to two fantastic speakers!
 
