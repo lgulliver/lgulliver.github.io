@@ -166,13 +166,13 @@ One important thing here is that we set the build context for the `docker build`
       uses: docker/build-push-action@v1.1.0
       with:
         # Username used to log in to a Docker registry. If not set then no login will occur
-        username: ${{ secrets.DockerHubUser }}
+        username: {% raw %}${{ secrets.DockerHubUser }}{% endraw %}  
         # Password or personal access token used to log in to a Docker registry. If not set then no login will occur
-        password: ${{ secrets.DockerHubPassword }}
+        password: {% raw %}${{ secrets.DockerHubPassword }}{% endraw %}
         # Docker repository to tag the image with
-        repository: ${{ env.ImageName }}
+        repository: {% raw %}${{ env.ImageName }}{% endraw %}
         # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
-        tags: 'github-${{ env.BuildNumber }}'
+        tags: 'github-{% raw %}${{ env.BuildNumber }}{% endraw %}'
         # Path to the build context
         path: 'src'
         # Path to the Dockerfile (Default is '{path}/Dockerfile')
@@ -185,7 +185,7 @@ This use the Docker Build and Push action by Docker themselves.
 
 It looks a lot different to the Azure DevOps flavour of the task though ultimately it does the same thing. Personally I feel the Azure DevOps flavour is cleaner but I'm not sure it matters as they work the same way pretty much.
 
-Here, we're also setting the build context, but via `path` instead. We're also accessing our secrets and environment variables with `${{ <secret or env>.<Name> }}`. 
+Here, we're also setting the build context, but via `path` instead. We're also accessing our secrets and environment variables with {% raw %}`${{ <secret or env>.<Name> }}`{% endraw %}. 
 
 It pushes by default so for this, let's set `push` to `false`.
 
@@ -220,7 +220,7 @@ For the most part, they're the same as [my previous post](https://lgulliver.gith
       uses: aquasecurity/trivy-action@0.0.7
       with:
         # image reference
-        image-ref: ${{ env.ImageName }}:github-${{ env.BuildNumber }}
+        image-ref: {% raw %}${{ env.ImageName }}:github-${{ env.BuildNumber }}{% endraw %}  
         # exit code when vulnerabilities were found
         exit-code: 0
         # severities of vulnerabilities to be displayed
@@ -229,10 +229,8 @@ For the most part, they're the same as [my previous post](https://lgulliver.gith
     - name: Trivy Scan - High and Critical Severity
       uses: aquasecurity/trivy-action@0.0.7
       with:
-        # image reference
-        {% raw %}
-        image-ref: ${{ env.ImageName }}:github-${{ env.BuildNumber }}
-        {% endraw %}
+        # image reference        
+        image-ref: {% raw %}${{ env.ImageName }}:github-${{ env.BuildNumber }}{% endraw %}        
         # exit code when vulnerabilities were found
         exit-code: 1
         # severities of vulnerabilities to be displayed
@@ -271,13 +269,13 @@ The Github flavour of this action is the same action again which can be misleadi
       uses: docker/build-push-action@v1.1.0
       with:
         # Username used to log in to a Docker registry. If not set then no login will occur
-        username: ${{ secrets.DockerHubUser }}
+        username: {% raw %}${{ secrets.DockerHubUser }}{% endraw %}
         # Password or personal access token used to log in to a Docker registry. If not set then no login will occur
-        password: ${{ secrets.DockerHubPassword }}
+        password: {% raw %}${{ secrets.DockerHubPassword }}{% endraw %}
         # Docker repository to tag the image with
-        repository: ${{ env.ImageName }}
+        repository: {% raw %}${{ env.ImageName }}{% endraw %}
         # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
-        tags: 'github-${{ env.BuildNumber }}'
+        tags: 'github-{% raw %}${{ env.BuildNumber }}{% endraw %}'
         # Path to the build context
         path: 'src'
         # Path to the Dockerfile (Default is '{path}/Dockerfile')
