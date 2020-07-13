@@ -108,7 +108,7 @@ on:
     branches: [ master ]
 
 env:
-  BuildNumber: ${{ github.run_id }}-${{ github.run_number }}
+  BuildNumber: {% raw %}${{ github.run_id }}-${{ github.run_number }}{% endraw %}
   ImageName: 'liamgu/container-scanning-demo'
 
 jobs:
