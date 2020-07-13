@@ -3,6 +3,10 @@ author: Liam Gulliver
 title: DevOps Notts - June 2020 - Diversity in Tech
 tags: diversity tech lightning-talks nottingham
 date: 2020-07-03 10:51:11
+header:
+  video:
+    id: nxecjx-aEHw
+    provider: youtube
 ---
 In June, Mica Bell ([@MicaSophieBell](https://twitter.com/MicaSophiaBell)) and I ran our monthly instalment of DevOps Notts - this time celebrating diversity in tech through a series of lightning talks from a whole host of great speakers:
 
