@@ -5,7 +5,7 @@ tags: docker security scanning github-actions github devops trivy containers azu
 date: 2020-07-12 20:00:00
 ---
 
-Building upon my previous posts regarding [Trivy with Azure DevOps](https://lgulliver.github.io/container-security-scanning-with-trivy-in-azure-devops/) and [Github](https://lgulliver.github.io/container-security-scanning-with-trivy-in-github/) where we scanned pre-built images, I thought we should approach it from a "real-world" perspective, or at least how I use Trivy. 
+Building upon my previous posts regarding [Trivy with Azure DevOps](https://lgulliver.github.io/container-security-scanning-with-trivy-in-azure-devops/) and [Github](https://lgulliver.github.io/container-security-scanning-with-trivy-and-github-actions/) where we scanned pre-built images, I thought we should approach it from a "real-world" perspective, or at least how I use Trivy. 
 
 You're probably thinking "why weren't the other two posts real-world?" well, the truth is they absolutely are. You could trigger an action to scan a pre-built image for a whole host of different reasons and in reality, what I'm about to describe in this post isn't really any different. The only difference really is that before I push my container image to any registry, I'm going to scan the locally (to the build agent) built image.
 
