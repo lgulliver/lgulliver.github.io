@@ -18,7 +18,7 @@ minimal_mistakes_skin    : "dark" # "air", "aqua", "contrast", "dark", "dirt", "
 locale                   : "en-US"
 title                    : "Liam's Blog"
 title_separator          : "-"
-subtitle                 : "My waffling, now on the internet" # site tagline that appears below site title in masthead
+subtitle                 : "Blogging about Azure, Azure DevOps, DevOps and all that fun stuff" # site tagline that appears below site title in masthead
 name                     : "Liam Gulliver"
 description              : "An amazing website."
 url                      : "https://lgulliver.github.io" # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
