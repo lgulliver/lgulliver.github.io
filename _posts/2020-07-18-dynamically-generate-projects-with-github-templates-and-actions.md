@@ -1,7 +1,7 @@
 ---
 author: Liam Gulliver
 title: Dynamically Create Projects With Github Templates and Actions
-tags: github github-actions workflow
+tags: github github-actions workflow dotnet-core dotnet
 date: 2020-07-18 21:50:00
 ---
 
