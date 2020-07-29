@@ -3,6 +3,8 @@ author: Liam Gulliver
 title: Build, Scan and Push containers with Azure DevOps, GitHub and Trivy
 tags: docker security scanning github-actions github devops trivy containers azure-devops azure docker-hub
 date: 2020-07-12 20:00:00
+redirect_from:
+  - /bulid-scan-and-push-containers/
 ---
 
 Building upon my previous posts regarding [Trivy with Azure DevOps](https://lgulliver.github.io/container-security-scanning-with-trivy-in-azure-devops/) and [Github](https://lgulliver.github.io/container-security-scanning-with-trivy-and-github-actions/) where we scanned pre-built images, I thought we should approach it from a "real-world" perspective, or at least how I use Trivy. 
