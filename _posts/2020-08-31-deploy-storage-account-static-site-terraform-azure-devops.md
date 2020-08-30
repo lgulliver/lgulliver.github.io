@@ -219,7 +219,7 @@ I mentioned earlier on in this post that I was aiming for two environments, dev 
 
 To achieve this, I'm going to use the stages capability in Azure DevOps YAML.
 
-A basic setup could look something a little like this:
+A basic setup of stages could look something a little like this:
 
 ```yaml
 stages:
@@ -232,6 +232,7 @@ stages:
     # tasks go here
 
 - stage: prod
+  dependsOn: dev
   jobs:
   - job: infrastructure
     pool: 'ubuntu-latest'
@@ -240,4 +241,657 @@ stages:
     # tasks go here
 ```
 
-Stages can each have their own variables too as well as use globally defined variables in the pipeline.
+Stages can each have their own variables too as well as use globally defined variables in the pipeline. They can also have approval gates enabled, but for the purpose of this example, I'm not going to do that and I'm going to go ahead and deploy automatically.
+
+In each stage I'm going to execute the following:
+
+1. Deployment of ARM for Terraform backend.
+2. Replace tokens in my `tfvars`.
+3. Ensure I have the version of Terraform I want to use (0.12.29) available on the build agent
+4. `terraform init`
+5. `terraform plan`
+6. `terraform apply`
+7. Deploy to Azure storage
+
+The first thing I'm going to do is create myself a service connection in Azure DevOps to my Azure subscription so that I can deploy. Take a look at the [official docs](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml) on how to go about that.
+
+As I don't want to store the name of that service connection or any subscription IDs in my repository, I'm going to store those as variables in Azure DevOps.
+
+{% include figure image_path="/assets/images/posts/azuredevops_vars.png" alt="Azure DevOps variables" %}
+
+Now I've done that, I can start putting together my pipeline YAML starting with my global variables that don't need to be secret or are values I want to keep wherever I go.
+
+```yaml
+trigger:
+- master
+
+variables:
+  resource_group_tfstate: 'tfstate-uks-rg'
+  product: 'staticsite'
+  shortcode: 'lg'  
+
+stages:
+```
+
+You'll notice I don't define an agent pool here either, that's because I do it at the job level as one of the tasks we use later is currently only supported on Windows agents.
+
+So let's define our first stage, dev:
+
+```yaml
+- stage: dev
+  variables:    
+    location: 'uksouth'        
+    environment_name: 'dev'
+    location_short_code: 'uks'
+    backendAzureRmContainerName: tfstate
+    backendAzureRmKey: tfdev 
+  jobs: 
+```
+
+Dev doesn't depend on any pre-requisite steps that it depends on before the stage can be executed. Under normal cricumstance, I would potentially have a build as the first step which my dev stage would then depend on.
+
+What I do have here though are my stage specific variables. Some are the same in both stages but I've defined them in each as they are the most likely to change.
+
+The next thing I'm going to do is define the first job that will be executed for the stage which is to setup the infrastructure.
+
+```yaml
+jobs:
+  - job: Infrastructure
+    displayName: 'Infrastructure'
+    pool:
+      vmImage: 'ubuntu-latest'
+```
+
+This is naming the job and setting what agent pool I wish to use.
+
+As I mentioned earlier, my first step is to deploy the ARM template for the backend. I'm going to run this same step for each environment too using the Azure Resource Manager Template Deployment task.
+
+```yaml
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'ARM Template deployment: Resource Group scope'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(armConnection)'
+        subscriptionId: '$(subscription_id)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resource_group_tfstate)'
+        location: '$(location)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.DefaultWorkingDirectory)/infrastructure/backend/tfbackend.deploy.json'
+        deploymentMode: 'Incremental'
+```
+
+This will create a resource group solely for the shared backend storage account if it doesn't already exist, then create or update the storage account along with the blob containers required as defined by the ARM template.
+
+You may have noticed in the ARM template I define an output. This can be quite tricky to retrieve on an agent as the default task outputs it to JSON which you then have to parse. Thankfully, there's an ARM outputs task which will do all the heavy lifting for you and provide you with a pipeline variable that is named the same as your output.
+
+```json
+"outputs": {
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    }
+  }
+```
+
+As you can see above, it creates an output called `storageAccountName` which the ARM outputs task will then use to create a pipeline variable with the same name that I can then use as `$(storageAccountName)`.
+
+This variable contains the name of the storage account for the Terraform backend where I store my state.
+
+```yaml
+    - task: ARM Outputs@6
+      inputs:
+        ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
+        ConnectedServiceNameARM: '$(armConnection)'
+        resourceGroupName: '$(resource_group_tfstate)'      
+        whenLastDeploymentIsFailed: 'fail'
+```
+
+From here, I'm going to do my other pre-requisite task which is to replace tokens in my `tfvars` file that I have defined with double underscores, with the appropriate values from the pipeline. To do this, I'm going to use the Replace Tokens task.
+
+```yaml
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      displayName: 'Replace tokens in **/*.tfvars'
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        targetFiles: '**/*.tfvars'
+        escapeType: none
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        enableTelemetry: false
+```
+
+The last setup task for the stage is to ensure we have the right Terraform version available. To do that, I use the Terraform Installer task.
+
+```yaml
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform 0.12.29'
+      inputs:
+        terraformVersion: 0.12.29
+```        
+
+At this point, the pipeline YAML looks a little something like this:
+
+```yaml
+trigger:
+- master
+
+variables:
+  resource_group_tfstate: 'tfstate-uks-rg'
+  product: 'staticsite'
+  shortcode: 'lg'  
+
+stages:
+- stage: dev
+  variables:    
+    location: 'uksouth'        
+    environment_name: 'dev'
+    location_short_code: 'uks'
+    backendAzureRmContainerName: tfstate
+    backendAzureRmKey: tfdev  
+
+  jobs:
+  - job: Infrastructure
+    displayName: 'Infrastructure'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'ARM Template deployment: Resource Group scope'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(armConnection)'
+        subscriptionId: '$(subscription_id)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resource_group_tfstate)'
+        location: '$(location)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.DefaultWorkingDirectory)/infrastructure/backend/tfbackend.deploy.json'
+        deploymentMode: 'Incremental'
+
+    - task: ARM Outputs@6
+      inputs:
+        ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
+        ConnectedServiceNameARM: '$(armConnection)'
+        resourceGroupName: '$(resource_group_tfstate)'      
+        whenLastDeploymentIsFailed: 'fail'
+
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      displayName: 'Replace tokens in **/*.tfvars'
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        targetFiles: '**/*.tfvars'
+        escapeType: none
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        enableTelemetry: false
+
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform 0.12.29'
+      inputs:
+        terraformVersion: 0.12.29
+```      
+
+I'm defining my global variables, the dev stage and the pre-requistes are deployed or configured ahead of executing the Terraform.
+
+Executing the Terraform is broken down into 3 steps, `init`, `plan` and `apply`.
+
+```yaml
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-backend-config=$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: '$(backendAzureRmContainerName)'
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform plan'
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-var-file="$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars" --out=planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform apply'
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-auto-approve planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+```        
+
+These steps will create an environment specific resource group and deploy the required resources into it.
+
+Now, I need to create another job. The Azure File Copy job is by far the easiest way to deploy files into a blob container. It uses `azcopy` to copy the files, however, the task itself will only execute on a Windows agent which is why we need to create a second job.
+
+```yaml
+  - job: Deploy
+    displayName: 'Deploy'
+    pool:
+      vmImage: 'windows-latest'
+    dependsOn: 'Infrastructure'
+
+    steps:    
+    - task: AzureFileCopy@3
+      inputs:
+        SourcePath: '$(System.DefaultWorkingDirectory)/code'
+        azureSubscription: '$(armConnection)'
+        Destination: 'AzureBlob'
+        storage: '$(shortcode)$(product)$(environment_name)$(location_short_code)stor'
+        ContainerName: '$web'
+```
+
+The deploy job also needs the required infrastructure to exist first, so I've set the `dependsOn` for the entire job to be the `Infrastructure` job which runs the Terraform.
+
+Static website enabled storage accounts also require the files to be deployed into a specific blob container called `$web`. It gets created automatically when the static website option is enabled on the storage account.
+
+Bringing it all together, the pipeline now looks like this:
+
+```yaml
+trigger:
+- master
+
+variables:
+  resource_group_tfstate: 'tfstate-uks-rg'
+  product: 'staticsite'
+  shortcode: 'lg'  
+
+stages:
+- stage: dev
+  variables:    
+    location: 'uksouth'        
+    environment_name: 'dev'
+    location_short_code: 'uks'
+    backendAzureRmContainerName: tfstate
+    backendAzureRmKey: tfdev  
+
+  jobs:
+  - job: Infrastructure
+    displayName: 'Infrastructure'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'ARM Template deployment: Resource Group scope'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(armConnection)'
+        subscriptionId: '$(subscription_id)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resource_group_tfstate)'
+        location: '$(location)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.DefaultWorkingDirectory)/infrastructure/backend/tfbackend.deploy.json'
+        deploymentMode: 'Incremental'
+
+    - task: ARM Outputs@6
+      inputs:
+        ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
+        ConnectedServiceNameARM: '$(armConnection)'
+        resourceGroupName: '$(resource_group_tfstate)'      
+        whenLastDeploymentIsFailed: 'fail'
+
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      displayName: 'Replace tokens in **/*.tfvars'
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        targetFiles: '**/*.tfvars'
+        escapeType: none
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        enableTelemetry: false
+
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform 0.12.29'
+      inputs:
+        terraformVersion: 0.12.29
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-backend-config=$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: '$(backendAzureRmContainerName)'
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform plan'
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-var-file="$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars" --out=planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform apply'
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-auto-approve planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+  - job: Deploy
+    displayName: 'Deploy'
+    pool:
+      vmImage: 'windows-latest'
+    dependsOn: 'Infrastructure'
+
+    steps:    
+    - task: AzureFileCopy@3
+      inputs:
+        SourcePath: '$(System.DefaultWorkingDirectory)/code'
+        azureSubscription: '$(armConnection)'
+        Destination: 'AzureBlob'
+        storage: '$(shortcode)$(product)$(environment_name)$(location_short_code)stor'
+        ContainerName: '$web'
+```
+
+Should I execute that right now, it'll run and deploy my `index.html` file to the storage account.
+
+{% include figure image_path="/assets/images/posts/staticsite-dev.png" alt="Hello there" %}
+
+## Adding a second stage
+
+To add in the prod stage, I'm going to run all of the same tasks again but with couple of environment specific variable values and one important addition to the stage definition.
+
+```yaml
+- stage: prod
+  dependsOn: dev
+
+  variables:    
+    location: 'uksouth'        
+    environment_name: 'prod'
+    location_short_code: 'uks'
+    backendAzureRmContainerName: tfstate
+    backendAzureRmKey: tfprod
+```
+
+I'm making this stage dependent on dev succeeding and setting values where to `prod` where it was `dev` before.
+
+From there, all tasks are identical to the previous step, which I can just copy and paste from the previous stage.
+
+The overall pipeline YAML now looks like the below:
+
+```yaml
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+variables:
+  resource_group_tfstate: 'tfstate-uks-rg'
+  product: 'staticsite'
+  shortcode: 'lg'  
+
+stages:
+- stage: dev
+  variables:    
+    location: 'uksouth'        
+    environment_name: 'dev'
+    location_short_code: 'uks'
+    backendAzureRmContainerName: tfstate
+    backendAzureRmKey: tfdev  
+
+  jobs:
+  - job: Infrastructure
+    displayName: 'Infrastructure'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'ARM Template deployment: Resource Group scope'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(armConnection)'
+        subscriptionId: '$(subscription_id)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resource_group_tfstate)'
+        location: '$(location)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.DefaultWorkingDirectory)/infrastructure/backend/tfbackend.deploy.json'
+        deploymentMode: 'Incremental'
+
+    - task: ARM Outputs@6
+      inputs:
+        ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
+        ConnectedServiceNameARM: '$(armConnection)'
+        resourceGroupName: '$(resource_group_tfstate)'      
+        whenLastDeploymentIsFailed: 'fail'
+
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      displayName: 'Replace tokens in **/*.tfvars'
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        targetFiles: '**/*.tfvars'
+        escapeType: none
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        enableTelemetry: false
+
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform 0.12.29'
+      inputs:
+        terraformVersion: 0.12.29
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-backend-config=$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: '$(backendAzureRmContainerName)'
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform plan'
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-var-file="$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars" --out=planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform apply'
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-auto-approve planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+  - job: Deploy
+    displayName: 'Deploy'
+    pool:
+      vmImage: 'windows-latest'
+    dependsOn: 'Infrastructure'
+
+    steps:    
+    - task: AzureFileCopy@3
+      inputs:
+        SourcePath: '$(System.DefaultWorkingDirectory)/code'
+        azureSubscription: '$(armConnection)'
+        Destination: 'AzureBlob'
+        storage: '$(shortcode)$(product)$(environment_name)$(location_short_code)stor'
+        ContainerName: '$web'
+
+- stage: prod
+  dependsOn: dev
+
+  variables:    
+    location: 'uksouth'        
+    environment_name: 'prod'
+    location_short_code: 'uks'
+    backendAzureRmContainerName: tfstate
+    backendAzureRmKey: tfprod
+
+  jobs:
+  - job: Infrastructure
+    displayName: 'Infrastructure'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'ARM Template deployment: Resource Group scope'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(armConnection)'
+        subscriptionId: '$(subscription_id)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resource_group_tfstate)'
+        location: '$(location)'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.DefaultWorkingDirectory)/infrastructure/backend/tfbackend.deploy.json'
+        deploymentMode: 'Incremental'
+
+    - task: ARM Outputs@6
+      inputs:
+        ConnectedServiceNameSelector: 'ConnectedServiceNameARM'
+        ConnectedServiceNameARM: '$(armConnection)'
+        resourceGroupName: '$(resource_group_tfstate)'      
+        whenLastDeploymentIsFailed: 'fail'
+
+    - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+      displayName: 'Replace tokens in **/*.tfvars'
+      inputs:
+        rootDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        targetFiles: '**/*.tfvars'
+        escapeType: none
+        tokenPrefix: '__'
+        tokenSuffix: '__'
+        enableTelemetry: false
+
+    - task: TerraformInstaller@0
+      displayName: 'Install Terraform 0.12.29'
+      inputs:
+        terraformVersion: 0.12.29
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-backend-config=$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: '$(backendAzureRmContainerName)'
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform plan'
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-var-file="$(System.DefaultWorkingDirectory)/infrastructure/storage-account/az-storage-account-variables.tfvars" --out=planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+    - task: TerraformTaskV1@0
+      displayName: 'Terraform apply'
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/infrastructure/storage-account'
+        commandOptions: '-auto-approve planfile'
+        environmentServiceNameAzureRM: '$(armConnection)'
+        backendServiceArm: '$(armConnection)'
+        backendAzureRmResourceGroupName: '$(resource_group_tfstate)'
+        backendAzureRmStorageAccountName: '$(storageAccountName)'
+        backendAzureRmContainerName: $(backendAzureRmContainerName)
+        backendAzureRmKey: '$(backendAzureRmKey)'
+
+  - job: Deploy
+    displayName: 'Deploy'
+    pool:
+      vmImage: 'windows-latest'
+    dependsOn: 'Infrastructure'
+
+    steps:    
+    - task: AzureFileCopy@3
+      inputs:
+        SourcePath: '$(System.DefaultWorkingDirectory)/code'
+        azureSubscription: '$(armConnection)'
+        Destination: 'AzureBlob'
+        storage: '$(shortcode)$(product)$(environment_name)$(location_short_code)stor'
+        ContainerName: '$web'        
+```
+
+Heading into Azure DevOps once the pipeline has executed provides me with a view not too dissimilar to the Releases UI.
+
+{% include figure image_path="/assets/images/posts/staticsite-pipeline.png" alt="YAML Pipeline" %}
+
+I can also go into a job in a stage and see the output of each task.
+
+{% include figure image_path="/assets/images/posts/staticsite-logexample.png" alt="YAML Pipeline Detail" %}
+
+While only a basic setup here, I hope this helps to show you how to get up and running with static sites in Azure with Terraform and Azure DevOps.
+
+## Resources
+
+- [Azure DevOps Team Project](https://dev.azure.com/lgulliver/StaticSiteWithTerraform/)
+- [GitHub repository for all code in this post](https://github.com/lgulliver/TerraformAzureStorageStaticSite/)
