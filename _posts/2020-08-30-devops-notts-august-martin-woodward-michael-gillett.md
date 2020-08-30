@@ -2,7 +2,7 @@
 author: Liam Gulliver
 title: DevOps Notts - August 2020 - Martin Woodward and Michael Gillett
 tags: devops remote-working hypothesis-driven-development microsoft betway launchdarkly
-date: 2020-08-30
+date: 2020-08-30 14:17:00
 header:
   video:
     id: YZBkn5CFLYM
