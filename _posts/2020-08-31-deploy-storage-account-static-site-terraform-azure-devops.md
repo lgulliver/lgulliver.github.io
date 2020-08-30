@@ -3,6 +3,9 @@ author: Liam Gulliver
 title: Deploying a Static Website to Azure Storage with Terraform and Azure DevOps
 tags: devops terraform static-site azure-storage azure azure-devops
 date: 2020-08-31 12:30:00
+tagline: "A quick example on using Terraform to deploy a static website enabled storage account to Azure and deploy the content from Azure DevOps"
+header:
+  overlay_image: /assets/images/featured/tflogo.png 
 ---
 
 This week I've been working on using static site hosting more as I continue [working with Blazor](https://lgulliver.github.io/serverless-chat-with-blazor-webassembly/) on some personal projects.
