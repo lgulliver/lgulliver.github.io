@@ -1,0 +1,56 @@
+==================================================================
+https://keybase.io/lgulliver
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://lgulliver.github.io
+  * I am lgulliver (https://keybase.io/lgulliver) on keybase.
+  * I have a public key ASAlQ2LMQhmGiXVANeN9O9Dxq2CEfZKjZ1LTD729WG6Uawo
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "010177bc57cd5418a6d3eef3c4e3c8984da27bbf19c408d746137f68e9788c346bfa0a",
+      "host": "keybase.io",
+      "kid": "0120254362cc42198689754035e37d3bd0f1ab60847d92a36752d30fbdbd586e946b0a",
+      "uid": "b30a7cfd88e464d28181ae55bb037c19",
+      "username": "lgulliver"
+    },
+    "merkle_root": {
+      "ctime": 1599164253,
+      "hash": "49c649b9374593e5a12f9bc6bb58c0094029b6931a611797ef205622b988cb9a4b7cc5e54c651017dcb8c23c4e2bfa71484d2657b958b68a5fe69c12a9e6a3d1",
+      "hash_meta": "006d94be96f67eae52b0c0fb2300600dfa1d475d66035419eab37749b4afe3ce",
+      "seqno": 17467568
+    },
+    "service": {
+      "entropy": "mQYHBT3TlLF6OXGucE30VKl6",
+      "hostname": "lgulliver.github.io",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 2
+  },
+  "client": {
+    "name": "keybase.io go client",
+    "version": "5.5.0"
+  },
+  "ctime": 1599164299,
+  "expire_in": 504576000,
+  "prev": "81fa3ec01425a9fdab314b025ab0ef05bc70ed38cf50d084755d0d83101ba0f5",
+  "seqno": 11,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+hKRib2R5hqhkZXRhY2hlZMOpaGFzaF90eXBlCqNrZXnEIwEgJUNizEIZhol1QDXjfTvQ8atghH2So2dS0w+9vVhulGsKp3BheWxvYWTESpcCC8Qggfo+wBQlqf2rMUsCWrDvBbxw7TjPUNCEdV0NgxAboPXEIMgxHoctbLitrjKkAPLEjL5hPwaIUUFvjkjVweN+AhPdAgHCo3NpZ8RAKN0W9voIUpTIb8Ny8dTouY0F7eeDiWIsFT6CKQhcrtbUyMxGocU5gF0c/SOg7n/EZh8zSmBVbgS/TlIvYPkFAqhzaWdfdHlwZSCkaGFzaIKkdHlwZQildmFsdWXEINrppase9z43IrFYuO3oVplKcFOjbjOknMIMS3gNIgtUo3RhZ80CAqd2ZXJzaW9uAQ==
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/lgulliver
+
+==================================================================
