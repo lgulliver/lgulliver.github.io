@@ -23,6 +23,8 @@ In the final part of the series, we explore principles 9 through 12:
 11. The best architectures, requirements, and designs emerge from self-organizing teams.
 12. At regular intervals, the team reflects on how to become more effective, then tunes and adjusts its behavior accordingly.
 
+<iframe src="https://open.spotify.com/embed-podcast/episode/4LyuqPshlNqRHgB7YH6Zgt" width="100%" height="232" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+
 Both resulted in some fantastic discussions so please go ahead and take a listen and feel free to input into the discussion here, on [Twitter](https://twitter.com/AgileEngPodcast) or on our website, [https://www.agileengineeringpodcast.com](https://www.agileengineeringpodcast.com).
 
 We've also recently launched a Patreon page on [patreon.com/agileengineering](https://www.patreon.com/agileengineering). Our goal is to expand the type of content we provide to our audience and help to provide guidance and insights from people who do this stuff every single day direct to you; whether you are mildly interested in the topics through to if you’re the most passionate CTO! We're looking to provide more video content and a live show and would appreciate any support you can give to help us level up! Take a look at my post on [Patreon](https://lgulliver.github.io/launching-patreon-for-agile-engineering-podcast/) for more information.
