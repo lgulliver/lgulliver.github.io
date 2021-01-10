@@ -1,7 +1,7 @@
 ---
 author: Liam Gulliver
 title: Azureish Live! Building a Git Commit Watcher with Azure Functions and GitHub [Part 1]
-tags: devops azure github serverless twitch youtube liam-gulliver pete-gallagher jonathan-relf azure-functions webhooks
+tags: devops azure github serverless twitch youtube liam-gulliver pete-gallagher jonathan-relf azure-functions webhooks signalr dotnet dotnet-core blazor
 date: 2020-10-28 23:30:00
 header:
   video:
