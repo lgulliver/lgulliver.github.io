@@ -1,7 +1,7 @@
 ---
 author: Liam Gulliver
 title: Azureish After Dark with Derek Campbell
-tags: devops among-us twitch youtube liam-gulliver octopus-deploy
+tags: devops among-us twitch youtube liam-gulliver octopus-deploy devopsderek
 date: 2020-11-03 22:00:00
 header:
   video:
