@@ -142,6 +142,8 @@ results:
         total: 8
 ```
 
+The really cool thing here is that the policies seem to also be categorised against the [Well-Architected Framework](https://docs.microsoft.com/en-us/azure/architecture/framework/).
+
 The output can also be provided as JSON or XML - you may recall if you read the [Trivy posts I wrote last year that Azure DevOps needs the output in XML](https://lgulliver.github.io/trivy-scan-results-to-azure-devops/). 
 
 To output it to XML, you need to append the `-o` or `--output` option with the value `xml`:
