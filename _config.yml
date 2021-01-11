@@ -20,7 +20,7 @@ title                    : "Liam's Blog"
 title_separator          : "-"
 subtitle                 : "Blogging about Azure, Azure DevOps, DevOps and all that fun stuff" # site tagline that appears below site title in masthead
 name                     : "Liam Gulliver"
-description              : "An amazing website."
+description              : "Blogging about Azure, Azure DevOps, DevOps and all that fun stuff"
 url                      : "https://lgulliver.github.io" # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
 repository               : "lgulliver/lgulliver.github.io"
@@ -115,9 +115,9 @@ author:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/lgulliver"
-    - label: "Instagram"
-      icon: "fab fa-fw fa-instagram"
-      # url: "https://instagram.com/"
+    - label: "Azureish Live!"
+      icon: "fab fa-fw fa-twitch"
+      url: "https://twitch.com/azureishlive"
 
 # Site Footer
 footer:
