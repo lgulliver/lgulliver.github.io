@@ -152,7 +152,9 @@ To output it to XML, you need to append the `-o` or `--output` option with the v
 terrascan scan -i k8s -o xml
 ```
 
-This will give you XML output that should be compatible with the JUnit XML format:
+This will give you XML output ~~that should be compatible with the JUnit XML format~~:
+
+**UPDATE: No it isn't compatible with JUnit/XUnit/NUnit or any other format supported by Azure DevOps**
 
 ```xml
 <results>
